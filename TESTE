@@ -2,7 +2,7 @@
     // ═══════════════════════════════════════════════════════════
     // SELETOR DE UNIDADE + TELEMETRIA
     // ═══════════════════════════════════════════════════════════
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKeCsn5lTZWWuvHTP8gVWIk1-n3sJS-SJwkS4ibdraQh5aDQC-TZgdLGwokUQHEGoZ/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYIo9jV3fZuQ2Pb9NhK_X7LmB9aRZ3C1U31Rli0EKYPFCUh6IyS-TAOpjXq0qFTwadBw/exec';
 
     const UNIDADES = [
         'Águas Claras','Arniqueira','Cassi Sudoeste','Cruzeiro Center',
@@ -102,8 +102,12 @@
         border: 2px solid #2d7dff;
     `;
     menu.innerHTML = `
-        <h2 style="margin: 0 0 10px 0; font-size: 18px; text-align: center; color: #2d7dff;">🤖 Central de Automação</h2>
-        <p style="font-size: 13px; text-align: center; color: #aaa; margin-bottom: 20px;">Selecione o robô para iniciar:</p>
+        <h2 style="margin: 0 0 6px 0; font-size: 18px; text-align: center; color: #2d7dff;">🤖 Central de Automação</h2>
+        <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:14px; background:#2a2a2a; border-radius:8px; padding:7px 10px;">
+            <span style="font-size:12px; color:#aaa;">📍</span>
+            <span id="label-unidade-atual" style="font-size:12px; color:#f1f1f1; font-weight:bold;">${unidade}</span>
+            <button id="btn-trocar-unidade" style="margin-left:auto; font-size:11px; padding:3px 8px; background:#2d7dff; color:#fff; border:none; border-radius:6px; cursor:pointer;">Trocar</button>
+        </div>
         <div id="botoes-robos" style="display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; padding-right: 5px;"></div>
         <button id="fechar-menu-central" style="margin-top: 20px; width: 100%; padding: 10px; background: #444; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">❌ Fechar Menu</button>
     `;
@@ -129,6 +133,19 @@
 
     // Fechar menu
     document.getElementById('fechar-menu-central').onclick = () => menu.remove();
+
+    // Botão trocar unidade
+    document.getElementById('btn-trocar-unidade').onclick = () => {
+        sessionStorage.removeItem('unidade_central');
+        menu.remove();
+        mostrarSeletorUnidade((novaUnidade) => {
+            document.getElementById('menu-central-robos')?.remove();
+            // Reabre o menu chamando o bookmarklet novamente
+            const s = document.createElement('script');
+            s.src = 'https://raw.githubusercontent.com/ryanhugo070-source/AUTOteste/main/TESTE?v=' + Date.now();
+            document.head.appendChild(s);
+        });
+    };
 
     // 3. Dicionário com os scripts ATUALIZADOS
     const robos = {
