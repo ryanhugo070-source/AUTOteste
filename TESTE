@@ -1,4 +1,86 @@
-   (() => {
+(() => {
+    // ═══════════════════════════════════════════════════════════
+    // SELETOR DE UNIDADE + TELEMETRIA
+    // ═══════════════════════════════════════════════════════════
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKeCsn5lTZWWuvHTP8gVWIk1-n3sJS-SJwkS4ibdraQh5aDQC-TZgdLGwokUQHEGoZ/exec';
+
+    const UNIDADES = [
+        'Águas Claras','Arniqueira','Cassi Sudoeste','Cruzeiro Center',
+        'Guará I','Guará II','Guará II - Real Mix','Jacarandá',
+        'Metrópole','Núcleo Bandeirante','Park Sul','Shopping Felicittá',
+        'Sia Center','Sudoeste 104','Sudoeste 105','Sudoeste Centro Clínico',
+        'Sudoeste JK','Terraço Shopping','Vicente Pires I','Vicente Pires II'
+    ];
+
+    function enviarTelemetria(unidade) {
+        const convenioEl = document.querySelector('[id*="convenio"], [name*="convenio"], [class*="convenio"], [id*="plano"], [name*="plano"]');
+        const convenio = convenioEl ? (convenioEl.innerText || convenioEl.value || 'Não identificado') : 'Não identificado';
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                unidade: unidade,
+                convenio: convenio,
+                pagina: window.location.href,
+                data: new Date().toLocaleString('pt-BR')
+            })
+        });
+    }
+
+    function mostrarSeletorUnidade(callback) {
+        const unidadeSalva = sessionStorage.getItem('unidade_central');
+        if (unidadeSalva) { callback(unidadeSalva); return; }
+
+        const overlay = document.createElement('div');
+        overlay.id = 'overlay-unidade-central';
+        overlay.style.cssText = `
+            position: fixed; inset: 0; background: rgba(0,0,0,0.80);
+            z-index: 2147483646; display: flex; align-items: center; justify-content: center;
+            font-family: system-ui, Arial, sans-serif;
+        `;
+        overlay.innerHTML = `
+            <div style="background:#1e1e1e; border-radius:12px; padding:24px; width:300px;
+                        border:2px solid #2d7dff; box-shadow:0 10px 40px rgba(0,0,0,0.7);">
+                <h3 style="margin:0 0 6px 0; color:#2d7dff; text-align:center; font-size:16px;">
+                    📍 Selecione sua Unidade
+                </h3>
+                <p style="color:#aaa; font-size:12px; text-align:center; margin:0 0 14px 0;">
+                    Necessário para registro de uso
+                </p>
+                <select id="select-unidade-central" style="
+                    width:100%; padding:10px; border-radius:8px; border:1px solid #444;
+                    background:#2a2a2a; color:#f1f1f1; font-size:14px; margin-bottom:14px;
+                ">
+                    <option value="">-- Escolha sua unidade --</option>
+                    ${UNIDADES.map(u => `<option value="${u}">${u}</option>`).join('')}
+                </select>
+                <button id="btn-confirmar-unidade-central" style="
+                    width:100%; padding:10px; background:#2d7dff; color:#fff;
+                    border:none; border-radius:8px; font-size:14px; font-weight:bold;
+                    cursor:pointer;
+                ">✅ Confirmar</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        document.getElementById('btn-confirmar-unidade-central').onclick = () => {
+            const escolha = document.getElementById('select-unidade-central').value;
+            if (!escolha) { alert('Por favor, selecione uma unidade!'); return; }
+            sessionStorage.setItem('unidade_central', escolha);
+            overlay.remove();
+            enviarTelemetria(escolha);
+            callback(escolha);
+        };
+    }
+
+    // Inicia o fluxo: primeiro pede unidade, depois abre o menu
+    mostrarSeletorUnidade((unidade) => {
+
+    // ═══════════════════════════════════════════════════════════
+    // FIM DO SELETOR — MENU CENTRAL ABAIXO
+    // ═══════════════════════════════════════════════════════════
+
     // 1. Impede a abertura de múltiplos menus centrais
     if (document.getElementById('menu-central-robos')) return;
 
@@ -49,6 +131,7 @@
     document.getElementById('fechar-menu-central').onclick = () => menu.remove();
 
     // 3. Dicionário com os scripts ATUALIZADOS
+    const robos = {
     const robos = {
         "PLANASSISTE MPU": () => {
             (function(){if(window.__rob)return;window.__rob=true;var u=window.location.href;document.body.innerHTML='';document.head.innerHTML='';var ui=document.createElement('div');ui.style='height:120px;background:#e9ecef;padding:10px;font-family:Arial;box-sizing:border-box;overflow:hidden;border-bottom:3px solid #0056b3;';ui.innerHTML='<h3 style="margin:0 0 5px 0;color:#333;">🤖 Robô Automático (Agrupamento Ativo)</h3><textarea id="rc" placeholder="Cole os códigos (403...)" style="width:300px;height:70px;vertical-align:top;border:1px solid #ccc;padding:5px;"></textarea><button id="rb" style="height:70px;padding:0 20px;margin-left:10px;background:#28a745;color:white;font-weight:bold;border:none;border-radius:5px;cursor:pointer;vertical-align:top;font-size:14px;">INICIAR MÁQUINA</button><button id="rx" style="height:70px;padding:0 20px;margin-left:10px;background:#dc3545;color:white;font-weight:bold;border:none;border-radius:5px;cursor:pointer;vertical-align:top;font-size:14px;">PARAR E FECHAR</button><span id="rs" style="margin-left:15px;font-weight:bold;color:#333;font-size:16px;">Aguardando...</span>';document.body.appendChild(ui);var frm=document.createElement('iframe');frm.id='sf';frm.src=u;frm.style='width:100%;height:calc(100vh - 120px);border:none;';document.body.appendChild(frm);document.body.style.margin='0';document.body.style.overflow='hidden';var q=[],id=0,st='tabela',lp=null;document.getElementById('rx').onclick=function(){clearInterval(lp);window.__rob=false;ui.remove();frm.style.height='100vh';};document.getElementById('rb').onclick=function(){var v=document.getElementById('rc').value.match(/403\d{5}/g);if(!v)return alert('Nenhum código válido.');var cts={};for(var i=0;i<v.length;i++){cts[v[i]]=(cts[v[i]]||0)+1;}q=[];for(var k in cts){q.push({c:k,qty:cts[k]});}id=0;st='tabela';document.getElementById('rs').innerText='Processando '+q.length+' códigos únicos...';this.disabled=true;document.getElementById('rc').disabled=true;lp=setInterval(rl,1500);};function rl(){var d,cw;try{cw=document.getElementById('sf').contentWindow;d=cw.document;}catch(e){return;}if(d.readyState!=='complete')return;if(id>=q.length){clearInterval(lp);document.getElementById('rs').innerText='✅ Concluído! O último código foi salvo e a tela finalizada.';document.getElementById('rs').style.color='#28a745';return;}if(st==='tabela'){var b=d.querySelector('#CODIGOTABELA_btn');if(b){if(!cw._hk){var o=cw.window.open;cw.window.open=function(a,x,c){var w=o.call(cw,a,x,c);var t=setInterval(function(){try{var l=w.document.querySelector('#FormMain > div > div > div > div > div > div > div > div > div.div_grid > table > tbody > tr:nth-child(7) > td:nth-child(1) > a');if(!l){var es=w.document.querySelectorAll('a');for(var i=0;i<es.length;i++){if((es[i].innerText||'').includes('TUSS')){l=es[i];break;}}}if(l){l.click();clearInterval(t);st='preencher';}}catch(e){}},500);return w;};cw._hk=true;b.click();document.getElementById('rs').innerText='Aguardando a tabela TUSS...';}}else{st='preencher';}}else if(st==='preencher'){var f1=d.querySelector('#FormMain > table > tbody > tr:nth-child(1) > td:nth-child(4) > table > tbody > tr > td:nth-child(1) > input.frm_field_lkp');var f2=d.querySelector('#FormMain > table > tbody > tr:nth-child(3) > td:nth-child(2) > table > tbody > tr > td:nth-child(1) > input.frm_field_lkp');var fq=d.querySelector('#FormMain > table > tbody > tr:nth-child(2) > td:nth-child(2) > input');var ult=(id===q.length-1);var sb=ult?'body > table > tbody > tr:nth-child(1) > td > div > table > tbody > tr:nth-child(2) > td > table > tbody > tr > td.StmMain > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td > div > div.act_box > div > div > div > div:nth-child(3) > a':'body > table > tbody > tr:nth-child(1) > td > div > table > tbody > tr:nth-child(2) > td > table > tbody > tr > td.StmMain > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr:nth-child(1) > td > div > div.act_box > div > div > div > div:nth-child(2) > a > nobr';var bt=d.querySelector(sb);if(f1&&f2&&bt){if(cw._wt)return;document.getElementById('rs').innerText=ult?('⏳ Finalizando com: '+q[id].c+' (Qtd: '+q[id].qty+') - Último!'):('⏳ Inserindo: '+q[id].c+' (Qtd: '+q[id].qty+') - '+(id+1)+'/'+q.length);f1.value='';f1.value=q[id].c;f1.dispatchEvent(new Event('input',{bubbles:true}));f1.dispatchEvent(new Event('change',{bubbles:true}));f2.value='';f2.value='Exames-Patologia Clínica';f2.dispatchEvent(new Event('input',{bubbles:true}));f2.dispatchEvent(new Event('change',{bubbles:true}));if(fq&&q[id].qty>1){fq.value='';fq.value=q[id].qty;fq.dispatchEvent(new Event('input',{bubbles:true}));fq.dispatchEvent(new Event('change',{bubbles:true}));}cw._wt=true;setTimeout(function(){bt.click();id++;},800);}else{cw._wt=false;}}}})();
@@ -1305,6 +1388,91 @@
             })();
         }
     };
+        "MPLAN_10_DIGITOS": () => {
+        (function () {
+            if (document.getElementById('g-painel-mplan10')) return;
+            const d = document.createElement('div');
+            d.id = 'g-painel-mplan10';
+            d.style.cssText = 'position:fixed;top:10px;right:10px;width:300px;background:#2d3436;color:#fff;padding:15px;z-index:999999;border-radius:8px;font-family:Arial;box-shadow:0 4px 10px rgba(0,0,0,0.5);border:3px solid #e67e22';
+            d.innerHTML = `
+                <h3 style="margin:0 0 10px;color:#f39c12">🤖 Códigos de 10 Dígitos</h3>
+                <p style="margin:0 0 10px;font-size:11px;color:#bdc3c7">Insira os códigos (Filtra apenas sequências de 10 números).</p>
+                <textarea id="g-txt-mplan10" style="width:100%;height:80px;color:#000;border-radius:4px;padding:5px;" placeholder="Cole os códigos de 10 dígitos aqui..."></textarea>
+                <button id="g-btn-mplan10" style="width:100%;padding:10px;background:#e67e22;color:#fff;border:none;border-radius:5px;cursor:pointer;margin-top:5px;font-weight:bold">INICIAR ▶</button>
+                <div id="g-status-mplan10" style="margin-top:10px;font-size:12px;color:#dfe6e9">Aguardando...</div>
+                <button onclick="this.parentElement.remove()" style="width:100%;padding:5px;margin-top:10px;background:#d63031;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:bold;">❌ FECHAR</button>
+            `;
+            document.body.appendChild(d);
+            const wait = ms => new Promise(r => setTimeout(r, ms));
+            
+            document.getElementById('g-btn-mplan10').onclick = async () => {
+                const t = document.getElementById('g-txt-mplan10').value;
+                let todosCods = t.match(/\b\d{10}\b/g) || [];
+                if (!todosCods.length) return alert('Nenhum código de 10 dígitos foi encontrado no texto colado!');
+                const contagem = {};
+                todosCods.forEach(c => { contagem[c] = (contagem[c] || 0) + 1; });
+                const itensUnicos = Object.keys(contagem).map(c => ({ codigo: c, qtd: contagem[c] }));
+                const status = document.getElementById('g-status-mplan10');
+                document.getElementById('g-btn-mplan10').disabled = true;
+                const setVal = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+                for (let i = 0; i < itensUnicos.length; i++) {
+                    let item = itensUnicos[i];
+                    status.innerText = `Processando ${i + 1}/${itensUnicos.length}: ${item.codigo} (Qtd: ${item.qtd})`;
+                    let inputs = Array.from(document.querySelectorAll('input[type="text"]')).filter(el => {
+                        return el.getBoundingClientRect().width > 0 && el.id !== 'g-txt-mplan10';
+                    });
+                    let inpCodigo = inputs.find(el => el.placeholder.includes('Cód') || el.name.includes('cod') || el.id.includes('cod'));
+                    if (!inpCodigo && inputs.length >= 2) {
+                        inpCodigo = inputs[inputs.length - 4] || inputs[inputs.length - 3];
+                    }
+                    let inpQtd = inputs.find(el => el.name.includes('qtd') || el.name.includes('quant') || el.id.includes('qtd') || el.id.includes('quant'));
+                    if (!inpQtd && inputs.length >= 1) {
+                        inpQtd = inputs[inputs.length - 1];
+                    }
+                    if (inpCodigo) {
+                        inpCodigo.focus();
+                        setVal.call(inpCodigo, '');
+                        inpCodigo.dispatchEvent(new Event('input', { bubbles: true }));
+                        await wait(200);
+                        setVal.call(inpCodigo, item.codigo);
+                        inpCodigo.dispatchEvent(new Event('input', { bubbles: true }));
+                        inpCodigo.dispatchEvent(new Event('change', { bubbles: true }));
+                        inpCodigo.dispatchEvent(new Event('blur', { bubbles: true }));
+                        inpCodigo.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', keyCode: 9, bubbles: true }));
+                        await wait(1500);
+                    }
+                    if (inpQtd) {
+                        inpQtd.focus();
+                        setVal.call(inpQtd, '');
+                        inpQtd.dispatchEvent(new Event('input', { bubbles: true }));
+                        await wait(200);
+                        setVal.call(inpQtd, item.qtd.toString());
+                        inpQtd.dispatchEvent(new Event('input', { bubbles: true }));
+                        inpQtd.dispatchEvent(new Event('change', { bubbles: true }));
+                        await wait(400);
+                    }
+                    let btn = document.querySelector('.fa-plus, .fa-plus-circle, button[class*="success" i]');
+                    if (!btn) {
+                        let elementos = Array.from(document.querySelectorAll('button, a, span, img')).filter(el => el.getBoundingClientRect().width > 0);
+                        btn = elementos.find(el => el.innerHTML.includes('plus') || el.className.includes('add') || el.className.includes('plus'));
+                    }
+                    if (btn) {
+                        btn.click();
+                        let icone = btn.querySelector('i');
+                        if (icone) icone.click();
+                    } else {
+                        if (inpQtd && inpQtd.nextElementSibling) {
+                            inpQtd.nextElementSibling.click();
+                        }
+                    }
+                    await wait(2000);
+                }
+                status.innerText = '✅ Concluído!';
+                document.getElementById('g-btn-mplan10').disabled = false;
+            };
+        })();
+    }
+    };
 
     // 4. Injeta os botões na janela central
     const container = document.getElementById('botoes-robos');
@@ -1323,124 +1491,14 @@
             transition: all 0.2s ease;
             margin-bottom: 5px;
         `;
-        // Efeito de Hover visual
         btn.onmouseover = () => btn.style.background = '#1a5bcc';
         btn.onmouseout = () => btn.style.background = '#2d7dff';
-        
-        // Ação ao clicar: Fecha o menu central e roda o código original
         btn.onclick = () => {
             menu.remove();
             func();
         };
         container.appendChild(btn);
     }
-})();
-"MPLAN_10_DIGITOS": () => {
-        (function () {
-            if (document.getElementById('g-painel-mplan10')) return;
-            const d = document.createElement('div');
-            d.id = 'g-painel-mplan10';
-            d.style.cssText = 'position:fixed;top:10px;right:10px;width:300px;background:#2d3436;color:#fff;padding:15px;z-index:999999;border-radius:8px;font-family:Arial;box-shadow:0 4px 10px rgba(0,0,0,0.5);border:3px solid #e67e22'; // Borda laranja para diferenciar
-            d.innerHTML = `
-                <h3 style="margin:0 0 10px;color:#f39c12">🤖 Códigos de 10 Dígitos</h3>
-                <p style="margin:0 0 10px;font-size:11px;color:#bdc3c7">Insira os códigos (Filtra apenas sequências de 10 números).</p>
-                <textarea id="g-txt-mplan10" style="width:100%;height:80px;color:#000;border-radius:4px;padding:5px;" placeholder="Cole os códigos de 10 dígitos aqui..."></textarea>
-                <button id="g-btn-mplan10" style="width:100%;padding:10px;background:#e67e22;color:#fff;border:none;border-radius:5px;cursor:pointer;margin-top:5px;font-weight:bold">INICIAR ▶</button>
-                <div id="g-status-mplan10" style="margin-top:10px;font-size:12px;color:#dfe6e9">Aguardando...</div>
-                <button onclick="this.parentElement.remove()" style="width:100%;padding:5px;margin-top:10px;background:#d63031;color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:bold;">❌ FECHAR</button>
-            `;
-            document.body.appendChild(d);
-            const wait = ms => new Promise(r => setTimeout(r, ms));
-            
-            document.getElementById('g-btn-mplan10').onclick = async () => {
-                const t = document.getElementById('g-txt-mplan10').value;
-                
-                // Regex ajustada: Captura termos que possuem EXATAMENTE 10 dígitos numéricos (\b\d{10}\b)
-                let todosCods = t.match(/\b\d{10}\b/g) || [];
-                if (!todosCods.length) return alert('Nenhum código de 10 dígitos foi encontrado no texto colado!');
-                
-                // Agrupa e conta as quantidades de códigos repetidos
-                const contagem = {};
-                todosCods.forEach(c => { contagem[c] = (contagem[c] || 0) + 1; });
-                const itensUnicos = Object.keys(contagem).map(c => ({ codigo: c, qtd: contagem[c] }));
-                
-                const status = document.getElementById('g-status-mplan10');
-                document.getElementById('g-btn-mplan10').disabled = true;
-                const setVal = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-                
-                for (let i = 0; i < itensUnicos.length; i++) {
-                    let item = itensUnicos[i];
-                    status.innerText = `Processando ${i + 1}/${itensUnicos.length}: ${item.codigo} (Qtd: ${item.qtd})`;
-                    
-                    // Captura todos os inputs de texto visíveis da página
-                    let inputs = Array.from(document.querySelectorAll('input[type="text"]')).filter(el => {
-                        return el.getBoundingClientRect().width > 0 && el.id !== 'g-txt-mplan10';
-                    });
-                    
-                    // Identifica os inputs por palavras-chave ou por exclusão (baseado no layout da tela do Mplan)
-                    let inpCodigo = inputs.find(el => el.placeholder.includes('Cód') || el.name.includes('cod') || el.id.includes('cod'));
-                    if (!inpCodigo && inputs.length >= 2) {
-                        inpCodigo = inputs[inputs.length - 4] || inputs[inputs.length - 3];
-                    }
-                    
-                    let inpQtd = inputs.find(el => el.name.includes('qtd') || el.name.includes('quant') || el.id.includes('qtd') || el.id.includes('quant'));
-                    if (!inpQtd && inputs.length >= 1) {
-                        inpQtd = inputs[inputs.length - 1]; // Geralmente o último campo preenchível da linha é a quantidade
-                    }
-                    
-                    // 1. Digita o Código do Procedimento
-                    if (inpCodigo) {
-                        inpCodigo.focus();
-                        setVal.call(inpCodigo, '');
-                        inpCodigo.dispatchEvent(new Event('input', { bubbles: true }));
-                        await wait(200);
-                        
-                        setVal.call(inpCodigo, item.codigo);
-                        inpCodigo.dispatchEvent(new Event('input', { bubbles: true }));
-                        inpCodigo.dispatchEvent(new Event('change', { bubbles: true }));
-                        inpCodigo.dispatchEvent(new Event('blur', { bubbles: true }));
-                        
-                        // Simula pressionar "Tab" para forçar o sistema a buscar a descrição do item
-                        inpCodigo.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', keyCode: 9, bubbles: true }));
-                        await wait(1500); // Pausa para o Ajax do site processar o código de 10 dígitos
-                    }
-                    
-                    // 2. Digita a Quantidade Calculada
-                    if (inpQtd) {
-                        inpQtd.focus();
-                        setVal.call(inpQtd, '');
-                        inpQtd.dispatchEvent(new Event('input', { bubbles: true }));
-                        await wait(200);
-                        
-                        setVal.call(inpQtd, item.qtd.toString());
-                        inpQtd.dispatchEvent(new Event('input', { bubbles: true }));
-                        inpQtd.dispatchEvent(new Event('change', { bubbles: true }));
-                        await wait(400);
-                    }
-                    
-                    // 3. Procura e Clica no Botão Verde de Adicionar (+)
-                    let btn = document.querySelector('.fa-plus, .fa-plus-circle, button[class*="success" i]');
-                    if (!btn) {
-                        let elementos = Array.from(document.querySelectorAll('button, a, span, img')).filter(el => el.getBoundingClientRect().width > 0);
-                        btn = elementos.find(el => el.innerHTML.includes('plus') || el.className.includes('add') || el.className.includes('plus'));
-                    }
-                    
-                    if (btn) {
-                        btn.click();
-                        let icone = btn.querySelector('i');
-                        if (icone) icone.click();
-                    } else {
-                        // Clique de emergência por proximidade visual ao input de quantidade
-                        if (inpQtd && inpQtd.nextElementSibling) {
-                            inpQtd.nextElementSibling.click();
-                        }
-                    }
-                    
-                    await wait(2000); // Tempo de espera para o sistema computar a linha na tabela
-                }
-                
-                status.innerText = '✅ Concluído!';
-                document.getElementById('g-btn-mplan10').disabled = false;
-            };
-        })();
-    },
+
+    }); // fecha o mostrarSeletorUnidade
+})(); // fecha o (() =>
