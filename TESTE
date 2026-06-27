@@ -13,8 +13,28 @@
     ];
 
     function enviarTelemetria(unidade) {
-        const convenioEl = document.querySelector('[id*="convenio"], [name*="convenio"], [class*="convenio"], [id*="plano"], [name*="plano"]');
-        const convenio = convenioEl ? (convenioEl.innerText || convenioEl.value || 'Não identificado') : 'Não identificado';
+        // Detecta convênio pela URL ou pelo título da página
+        function detectarConvenio() {
+            const url = window.location.href.toLowerCase();
+            const titulo = document.title.toLowerCase();
+            if (url.includes('amil') || titulo.includes('amil')) return 'AMIL';
+            if (url.includes('benner') || url.includes('conecta') || titulo.includes('benner')) return 'BENNER';
+            if (url.includes('unimed') || titulo.includes('unimed')) return 'UNIMED';
+            if (url.includes('sulamerica') || titulo.includes('sulamerica') || titulo.includes('sul america')) return 'SULAMERICA';
+            if (url.includes('medsenior') || titulo.includes('medsenior')) return 'MEDSENIOR';
+            if (url.includes('inas') || titulo.includes('inas')) return 'INAS';
+            if (url.includes('tjdf') || titulo.includes('tjdf')) return 'TJDF';
+            if (url.includes('trt') || titulo.includes('trt')) return 'TRT';
+            if (url.includes('trf') || titulo.includes('trf')) return 'TRF';
+            if (url.includes('tst') || titulo.includes('tst')) return 'TST';
+            if (url.includes('mpu') || titulo.includes('mpu')) return 'MPU';
+            if (url.includes('postal') || titulo.includes('postal')) return 'POSTAL';
+            if (url.includes('affego') || titulo.includes('affego')) return 'AFFEGO';
+            // Tenta pelo elemento HTML
+            const el = document.querySelector('[id*="convenio"], [name*="convenio"], [class*="convenio"]');
+            return el ? (el.innerText || el.value || 'Não identificado') : 'Não identificado';
+        }
+        const convenio = detectarConvenio();
         fetch(APPS_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
